@@ -1,0 +1,1 @@
+celery --quiet -A margin  worker  -l info --purge

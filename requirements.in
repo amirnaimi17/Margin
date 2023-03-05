@@ -1,0 +1,6 @@
+django
+django_extensions
+pytz
+psycopg2-binary
+celery
+django-cron

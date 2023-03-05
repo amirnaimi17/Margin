@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Difference in records</title>
+  </head>
+  <body>
+    <p>The following records are different:</p>
+    <ul>
+      {% for record in difference %}
+        <li>{{ record.clearing_member }}</li>
+        <li>{{ record.account }}</li>
+        <li>{{ record.margin_class }}</li>
+        <li>{{ record.margin }}</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
