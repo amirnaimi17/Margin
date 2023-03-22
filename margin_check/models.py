@@ -15,7 +15,7 @@ class BaseMarginReport(models.Model):
         choices=MARGIN_CLASS_CHOICES.choices,
         db_index=True,
     )
-    margin = models.DecimalField(_("margin"), decimal_places=2, max_digits=5)
+    margin = models.DecimalField(_("margin"), decimal_places=1, max_digits=6)
     report_date = models.DateField(_("report date"), db_index=True)
 
 
@@ -23,9 +23,39 @@ class CC050(BaseMarginReport):
     def __str__(self):
         return f"{self.clearing_member}-{self.account}-{self.margin_class}-{self.report_date}"
 
+    @classmethod
+    def get_distinct_data_by_report_date(
+        cls,
+        report_date=None,
+    ):
+        return (
+            cls.objects.filter(report_date=report_date)
+            .distinct("clearing_member", "account", "margin_class")
+            .values("clearing_member", "account", "margin_class", "margin")
+        )
+
 
 class CI050(BaseMarginReport):
     report_time = models.TimeField(_("report time"))
 
     def __str__(self):
         return f"{self.clearing_member}-{self.account}-{self.margin_class}-{self.report_time}"
+
+    @classmethod
+    def get_distinct_data_by_report_date(cls, report_date=None, order_by="ASC"):
+        queryset = (
+            cls.objects.filter(report_date=report_date)
+            .distinct("clearing_member", "account", "margin_class")
+            .values("clearing_member", "account", "margin_class", "margin")
+        )
+
+        if order_by == "ASC":
+            queryset = queryset.order_by(
+                "clearing_member", "account", "margin_class", "report_time"
+            )
+        else:
+            queryset = queryset.order_by(
+                "clearing_member", "account", "margin_class", "-report_time"
+            )
+
+        return queryset

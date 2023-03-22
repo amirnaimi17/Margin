@@ -4,13 +4,14 @@
     <title>Difference in records</title>
   </head>
   <body>
+    <p>Differences of the date: {{ date }}</p>
     <p>The following records are different:</p>
     <ul>
-      {% for record in difference %}
-        <li>{{ record.clearing_member }}</li>
-        <li>{{ record.account }}</li>
-        <li>{{ record.margin_class }}</li>
-        <li>{{ record.margin }}</li>
+      {% for record in differences %}
+          {{ record.clearing_member }}
+          {{ record.account }}
+          {{ record.margin_class }}
+          {{ record.margin }}
       {% endfor %}
     </ul>
   </body>

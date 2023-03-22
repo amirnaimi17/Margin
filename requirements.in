@@ -4,3 +4,4 @@ pytz
 psycopg2-binary
 celery
 django-cron
+django-configurations

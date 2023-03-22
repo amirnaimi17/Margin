@@ -5,10 +5,11 @@ from smtplib import SMTPException
 
 from celery import current_task
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from margin.celery import app
-from margin_check.models import CI050
+from margin_check.models import CC050, CI050
 from margin_check.utils import TemplateEmail
 
 
@@ -42,30 +43,70 @@ def send_email(*args, **kwargs):
 
 
 @app.task
-def check_differences_of_ci050(*args, **kwargs):
+def check_differences_of_cc050_and_ci050_first_intraday(*args, **kwargs):
+    """Check, if the end-of-day values of the previous day are the same as the first intraday values."""
+    # The first intraday values of today
     now = timezone.now()
-    today_queryset = (
-        CI050.objects.filter(report_date=now.date())
-        .order_by("report_time")
-        .distinct("report_time", "clearing_member", "account", "margin_class")
-        .values("clearing_member", "account", "margin_class", "margin")
+    ci050_queryset = CI050.get_distinct_data_by_report_date(report_date=now.date())
+
+    if not ci050_queryset:
+        raise ValidationError(f"No record has been inserted for today {now} in CI050")
+
+    # The end-of-day values of yesterday
+    yesterday = now - timedelta(days=1)
+    cc050_queryset = CC050.get_distinct_data_by_report_date(
+        report_date=yesterday.date()
     )
 
-    yesterday = timezone.now() - timedelta(days=1)
-    yesterday_queryset = (
-        CI050.objects.filter(report_date=yesterday.date())
-        .order_by("-report_time")
-        .distinct("report_time", "clearing_member", "account", "margin_class")
-        .values("clearing_member", "account", "margin_class", "margin")
-    )
+    if not cc050_queryset:
+        raise ValidationError(f"No record inserted yesterday {yesterday} in CC050")
 
-    difference = today_queryset.difference(yesterday_queryset)
-    if difference:
+    # if there is a difference between both table records, inform Recipients by email.
+    differences = cc050_queryset.difference(ci050_queryset)
+    if differences:
         send_email.delay(
             emails=settings.CHECK_RECIPIENTS,
             context={
-                "difference": [],
+                "differences": [difference for difference in differences.all()],
+                "date": now.date(),
             },
             template_name="check_differences.html",
-            subject="Check the differences",
+            subject="Differences of first intraday values",
+        )
+
+
+@app.task
+def check_differences_of_cc050_and_ci050_last_intraday(*args, **kwargs):
+    """
+    Check, if the end-of-day values are the same as the last intraday values.
+
+    It runs every day, a few minutes before midnight to evaluate the records of both tables CI050 and CC050.
+    For example: this will run at 23:50 on 2020-05-05.
+    """
+    # The last intraday values of today
+    now = timezone.now()
+    ci050_queryset = CI050.get_distinct_data_by_report_date(
+        report_date=now.date(), order_by="DESC"
+    )
+
+    if not ci050_queryset:
+        raise ValidationError(f"No record inserted today {now} in CI050")
+
+    # The end-of-day values of today
+    cc050_queryset = CC050.get_distinct_data_by_report_date(report_date=now.date())
+
+    if not cc050_queryset:
+        raise ValidationError(f"No record inserted today {now} in CC050")
+
+    # if there is a difference between both table records, inform Recipients by email.
+    differences = cc050_queryset.difference(ci050_queryset)
+    if differences:
+        send_email.delay(
+            emails=settings.CHECK_RECIPIENTS,
+            context={
+                "differences": [difference for difference in differences.all()],
+                "date": now.date(),
+            },
+            template_name="check_differences.html",
+            subject="Differences of last intraday values",
         )
