@@ -79,7 +79,6 @@ class Common(Configuration):
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "margin",
             "USER": "margin",
-            "PASSWORD": "margin",
             "HOST": "localhost",
             "PORT": "5432",
         }
