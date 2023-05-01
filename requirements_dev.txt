@@ -23,7 +23,6 @@ django-configurations==2.4
 django-cron==0.6.0
 django-debug-toolbar==3.8.1
 django-extensions==3.2.1
-exceptiongroup==1.1.0
 filelock==3.9.0
 flake8==6.0.0
 freezegun==1.2.2
@@ -43,7 +42,7 @@ pbr==5.11.1
 pip-tools==6.12.2
 platformdirs==3.0.0
 pluggy==1.0.0
-pre-commit==3.1.0
+pre-commit==3.2.2
 prompt-toolkit==3.0.38
 psycopg2-binary==2.9.5
 pycodestyle==2.10.0
@@ -62,7 +61,6 @@ snowballstemmer==2.2.0
 sqlparse==0.4.3
 stevedore==5.0.0
 tokenize-rt==5.0.0
-tomli==2.0.1
 vine==5.0.0
 virtualenv==20.19.0
 wcwidth==0.2.6
